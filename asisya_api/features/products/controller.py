@@ -7,6 +7,7 @@ from asisya_api.features.products.models import ProductCreateDTO, ProductRespons
 from asisya_api.features.products.commands.create_product_command import CreateProductCommand
 from asisya_api.features.products.queries.get_products_query import GetProductsQuery
 from asisya_api.features.user.models import User
+from fastapi.responses import JSONResponse
 
 
 class ProductController:
@@ -21,9 +22,9 @@ class ProductController:
         self.router.post("/bulk", description="Carga masiva de productos")(self.create_bulk_products)
 
     async def create_product(
-        self,
-        product: ProductCreateDTO = Body(...),
-        current_user: User = Depends(get_authenticated_user),
+            self,
+            product: ProductCreateDTO = Body(...),
+            current_user: User = Depends(get_authenticated_user),
     ):
         """
         Endpoint para crear un producto único.
@@ -37,15 +38,15 @@ class ProductController:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
     async def get_products(
-        self,
-        page: int = 1,
-        per_page: int = 10,
-        name: Optional[str] = None,
-        category_id: Optional[int] = None,
-        available: Optional[bool] = None,
-        discontinued: Optional[bool] = None,
-        min_price: Optional[float] = None,
-        max_price: Optional[float] = None,
+            self,
+            page: int = 1,
+            per_page: int = 10,
+            name: Optional[str] = None,
+            category_id: Optional[int] = None,
+            available: Optional[bool] = None,
+            discontinued: Optional[bool] = None,
+            min_price: Optional[float] = None,
+            max_price: Optional[float] = None,
     ):
         query = GetProductsQuery(
             page=page,
@@ -86,7 +87,10 @@ class ProductController:
 
         total_products = len(products)
         total_messages = len(messages)
-        return {
-            "message": f"{total_products} productos encolados en {total_messages} mensajes",
-            "details": result_messages
-        }
+        return JSONResponse(
+            status_code=status.HTTP_202_ACCEPTED,
+            content={
+                "message": f"{total_products} productos encolados en {total_messages} mensajes",
+                "details": "El procesamiento se realizará en segundo plano"
+            }
+        )
