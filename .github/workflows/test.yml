@@ -91,9 +91,6 @@ jobs:
           pip install -r requirements.txt
           pip install awscli pytest
 
-      - name: 🌱 Seed initial data
-        run: python -m asisya_api.infrastructure.seeds.seed_initial_data
-
       - name: ☁️ Create LocalStack resources
         run: |
           aws --endpoint-url=http://localhost:4566 sqs create-queue --queue-name bulk-products-queue
