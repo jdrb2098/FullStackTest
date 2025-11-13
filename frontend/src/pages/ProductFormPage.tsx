@@ -11,11 +11,7 @@ const productSchema = z.object({
     .string()
     .min(1, "El nombre es requerido")
     .max(200, "El nombre es demasiado largo"),
-  slug: z
-    .string()
-    .max(100, "El slug es demasiado largo")
-    .optional()
-    .or(z.literal("")),
+  sku: z.string().max(100, "El sku es demasiado largo"),
   description: z
     .string()
     .max(1000, "La descripción es demasiado larga")
@@ -75,7 +71,7 @@ export function ProductFormPage() {
     try {
       const productData: ProductCreateRequest = {
         name: data.name,
-        slug: data.slug || undefined,
+        sku: data.sku,
         description: data.description || undefined,
         price: data.price,
         stock: data.stock, // Requerido por el controlador
@@ -153,27 +149,27 @@ export function ProductFormPage() {
 
         <div>
           <label
-            htmlFor="slug"
+            htmlFor="sku"
             className="block text-sm font-medium text-gray-700 mb-1"
           >
-            Slug
+            SKU <span className="text-red-500">*</span>
           </label>
           <input
-            id="slug"
+            id="sku"
             type="text"
-            {...register("slug")}
+            {...register("sku")}
             className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            aria-invalid={errors.slug ? "true" : "false"}
-            aria-describedby={errors.slug ? "slug-error" : undefined}
+            aria-invalid={errors.sku ? "true" : "false"}
+            aria-describedby={errors.sku ? "sku-error" : undefined}
             placeholder="producto-ejemplo"
           />
-          {errors.slug && (
+          {errors.sku && (
             <p
-              id="slug-error"
+              id="sku-error"
               className="mt-1 text-sm text-red-600"
               role="alert"
             >
-              {errors.slug.message}
+              {errors.sku.message}
             </p>
           )}
         </div>
