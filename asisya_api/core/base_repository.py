@@ -59,3 +59,28 @@ class BaseRepository(Generic[T]):
             return f"Duplicate entry for {column} in {table}. Please choose a different value."
         else:
             return "An error occurred while processing your request."
+
+    def bulk_create(self, objs: List[T]) -> List[T]:
+        """
+        Inserta múltiples objetos de una sola vez en la base de datos.
+
+        Args:
+            objs (List[T]): Lista de instancias del modelo a insertar.
+
+        Returns:
+            List[T]: Lista de objetos insertados con sus IDs generados (si aplica).
+        """
+        try:
+            self.db.bulk_save_objects(objs)
+            self.db.commit()
+            # refresh no funciona directamente con bulk_save_objects
+            # por lo tanto si necesitas objetos actualizados, se recargan manualmente
+            return objs
+        except IntegrityError as e:
+            self.db.rollback()
+            self.refresh_db()
+            raise ValueError(self._parse_integrity_error(e))
+        except Exception as e:
+            self.db.rollback()
+            self.refresh_db()
+            raise ValueError(f"Error during bulk create: {str(e)}")

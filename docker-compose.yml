@@ -34,13 +34,21 @@ services:
       sh -c "
         echo 'Esperando DB...' &&
         until pg_isready -h db -p 5432 -U asisya_user; do sleep 2; done &&
+        echo 'Base de datos lista. Ejecutando migraciones...' &&
         alembic -c asisya_api/infrastructure/alembic.ini upgrade head &&
+        echo 'Cargando datos iniciales...' &&
         python -m asisya_api.infrastructure.seeds.seed_initial_data &&
+        echo 'Esperando LocalStack...' &&
+        until curl -s http://localstack:4566 > /dev/null; do sleep 2; done &&
+        echo 'Creando cola SQS en LocalStack...' &&
+        aws --endpoint-url=http://localstack:4566 sqs create-queue --queue-name bulk-products-queue &&
+        echo 'Iniciando aplicación FastAPI...' &&
         python -m debugpy --listen 0.0.0.0:5678 -m uvicorn asisya_api.main:app --host 0.0.0.0 --port 8000 --reload
       "
 
   db:
     image: postgres:15
+    container_name: postgres_db
     environment:
       POSTGRES_DB: asisya_db
       POSTGRES_USER: asisya_user
@@ -63,6 +71,8 @@ services:
       - DEBUG=1
       - SERVICES=sqs,lambda
       - AWS_DEFAULT_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
     volumes:
       - "./volume:/var/lib/localstack"
       - "/var/run/docker.sock:/var/run/docker.sock"

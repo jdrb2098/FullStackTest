@@ -1,0 +1,78 @@
+name: 🧪 Asisya API - Tests
+
+on:
+  pull_request:
+  push:
+    branches: [ main, develop ]
+
+jobs:
+  run-tests:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: asisya_user
+          POSTGRES_PASSWORD: asisya_pass
+          POSTGRES_DB: asisya_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U asisya_user -d asisya_db"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
+      localstack:
+        image: localstack/localstack
+        env:
+          SERVICES: sqs,s3,lambda
+          AWS_DEFAULT_REGION: us-east-1
+        ports:
+          - 4566:4566
+
+    env:
+      DATABASE_URL: postgresql://asisya_user:asisya_pass@localhost:5432/asisya_db
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_DEFAULT_REGION: us-east-1
+      AWS_ENDPOINT_URL: http://localhost:4566
+      PYTHONPATH: asisya_api
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.12
+
+      - name: 📦 Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install awscli pytest
+
+      - name: 🧱 Run Alembic migrations
+        run: alembic -c asisya_api/infrastructure/alembic.ini upgrade head
+
+      - name: 🌱 Seed initial data
+        run: python -m asisya_api.infrastructure.seeds.seed_initial_data
+
+      - name: ☁️ Create LocalStack resources
+        run: |
+          aws --endpoint-url=http://localhost:4566 sqs create-queue --queue-name bulk-products-queue
+          aws --endpoint-url=http://localhost:4566 s3 mb s3://asisya-bucket
+          echo "print('Lambda mock')" > handler.py
+          zip lambda.zip handler.py
+          aws --endpoint-url=http://localhost:4566 lambda create-function \
+            --function-name processBulkProducts \
+            --runtime python3.12 \
+            --role arn:aws:iam::000000000000:role/lambda-role \
+            --handler handler.lambda_handler \
+            --zip-file fileb://lambda.zip
+
+      - name: 🧪 Run tests
+        run: pytest -v --disable-warnings

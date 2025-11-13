@@ -20,6 +20,19 @@
 
 El proyecto está diseñado para ser **modular, escalable y fácilmente extensible**, siguiendo una organización por **features** (módulos verticales).
 
+## 🎯 Objetivos
+
+Exponer una API REST con operaciones CRUD para productos y categorías.
+
+Permitir carga masiva eficiente (100.000+ productos).
+
+Implementar seguridad JWT para endpoints críticos.
+
+Aplicar principios de arquitectura limpia, DDD y CQRS.
+
+Incorporar pruebas unitarias e integración.
+
+Proveer contenedores Docker y un pipeline CI/CD básico.
 ---
 
 ## 🧰 Tecnologías Principales
@@ -85,14 +98,14 @@ features/
 
 ### ⚙️ Mediator Pattern
 
-El patrón **Mediator** (implementado con [`mediatr`](https://pypi.org/project/mediatr/)) desacopla la capa de presentación de los casos de uso:
+El patrón **Mediator** (implementado con [`mediatr`](https://pypi.org/project/mediatr/)) desacopla la capa de presentación de los casos de uso (controladores):
 
 ```python
 from mediatr import Mediator
 
 query = GetAllCategoriesQuery()
 result = await Mediator.send_async(query)
-Cada caso de uso define su Handler con la lógica correspondiente:
+## Cada caso de uso define su Handler con la lógica correspondiente:
 @Mediator.handler
 class GetAllCategoriesQueryHandler:
     def handle(self, query: GetAllCategoriesQuery):
@@ -136,11 +149,84 @@ class GetAllCategoriesQueryHandler:
 └── media/
     └── categories/
 ```
+### 🧪 Pruebas
+El proyecto incluye:
+
+- Pruebas unitarias: para casos de uso y repositorios.
+
+- Pruebas de integración: verifican endpoints y flujos reales.
+
+- Mocks: para servicios externos (DB, storage, email, etc.).
+
+### 🔐 Seguridad
+
+- JWT Authentication implementada en crosscutting/authorization.py.
+- Protección de endpoints mediante dependencias de seguridad en FastAPI.
+- Tokens se almacenan en localStorage del frontend.
+
+### 🚀 Escalabilidad y Performance
+
+- Carga masiva con procesamiento asíncrono (/products/bulk).
+- Lambdas AWS (LocalStack) para procesar colas de productos.
+- Batch inserts para optimizar escritura masiva.
 
 ### Despliegue Local con Docker
-
+1️⃣ Configurar variables de entorno
+```bash
+Crea un archivo .env basado en .env.example.
+```
 #### Construir y levantar contenedores
 
 ```bash
 docker-compose up --build
 ```
+
+### Servicios Disponibles
+
+| Servicio       | Puerto | Descripción                            |
+| -------------- | ------ | -------------------------------------- |
+| **db**         | `5433` | Base de datos PostgreSQL (`asisya_db`) |
+| **localstack** | `4566` | Emulador de AWS (SQS y Lambda)         |
+| **asisya_api** | `8000` | Backend FastAPI (API principal)        |
+| **frontend**   | `3000` | Aplicación React SPA                   |
+
+
+## ☁️ Despliegue Cloud con AWS (Infraestructura + API + Frontend)
+El proyecto está preparado para desplegarse automáticamente en un entorno AWS completamente gestionado utilizando GitHub Actions, AWS SAM (Serverless Application Model) y CloudFormation.
+
+Este proceso crea todos los recursos necesarios para ejecutar la aplicación de manera segura, escalable y reproducible.
+
+### 🧱 Recursos creados en AWS
+Durante la ejecución del pipeline, se despliegan y configuran los siguientes componentes:
+
+
+| Recurso              | Tipo AWS                    | Descripción                                                         |
+| -------------------- | --------------------------- | ------------------------------------------------------------------- |
+| **IAM Role**         | `AWS::IAM::Role`            | Rol con permisos para Lambda, EC2, RDS, S3 y SQS.                   |
+| **S3 Bucket**        | `AWS::S3::Bucket`           | Almacenamiento de archivos y artefactos de despliegue.              |
+| **SQS Queue**        | `AWS::SQS::Queue`           | Cola de mensajes para procesamiento masivo (`bulk-products-queue`). |
+| **RDS (PostgreSQL)** | `AWS::RDS::DBInstance`      | Base de datos relacional usada por el backend.                      |
+| **Lambda Functions** | `AWS::Serverless::Function` | Procesos asíncronos y tareas automáticas.                           |
+| **EC2 Instance**     | `AWS::EC2::Instance`        | Servidor que aloja el backend (FastAPI) y frontend (React).         |
+| **ECR Repository**   | `AWS::ECR::Repository`      | Repositorio para almacenar la imagen Docker de la API.              |
+
+Todos estos recursos se gestionan como una pila (stack) de CloudFormation, lo que permite repetir o actualizar el despliegue fácilmente.
+
+### ⚙️ Pipeline de Despliegue (GitHub Actions)
+
+El flujo CI/CD está definido en .github/workflows/deploy.yml y automatiza la creación de la infraestructura y el despliegue de la aplicación.
+
+#### 🔁 Flujo de ejecución
+
+- Push o ejecución manual (workflow_dispatch) activa el pipeline.
+
+- Se configura el entorno AWS usando credenciales seguras (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY).
+
+- Se instala y ejecuta AWS SAM para construir y empaquetar el template (template.yaml).
+
+- Se despliega la infraestructura con CloudFormation, incluyendo IAM, S3, SQS, RDS y EC2.
+
+- Se construye la imagen Docker de la API y se sube al repositorio ECR.
+
+- Finalmente, se conecta a la instancia EC2 para ejecutar el contenedor con FastAPI y React.
+
