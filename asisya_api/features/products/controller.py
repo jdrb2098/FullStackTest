@@ -22,25 +22,15 @@ class ProductController:
 
     async def create_product(
         self,
-        name: str = Form(...),
-        slug: Optional[str] = Form(None),
-        description: Optional[str] = Form(None),
-        price: float = Form(...),
-        stock: int = Form(...),
-        category_id: Optional[int] = Form(None),
-        picture: Optional[UploadFile] = File(None),
+        product: ProductCreateDTO = Body(...),
         current_user: User = Depends(get_authenticated_user),
     ):
+        """
+        Endpoint para crear un producto único.
+        Recibe JSON con los campos del producto.
+        """
         try:
-            dto = ProductCreateDTO(
-                name=name,
-                slug=slug,
-                description=description,
-                price=price,
-                stock=stock,
-                category_id=category_id,
-            )
-            command = CreateProductCommand(dto, picture, current_user)
+            command = CreateProductCommand(product, current_user)
             result = await self.mediator.send_async(command)
             return result
         except ValueError as e:

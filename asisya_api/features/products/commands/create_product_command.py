@@ -13,12 +13,13 @@ class CreateProductCommand:
     """
     Command para crear un producto individual.
     """
+
     def __init__(self, data: ProductCreateDTO, user):
         self.data = data
         self.user = user
 
 
-Mediator.handler
+@Mediator.handler
 class CreateProductCommandHandler:
     def __init__(self):
         self.product_repository = ProductRepository.instance()
