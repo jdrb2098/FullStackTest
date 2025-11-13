@@ -14,7 +14,7 @@ jobs:
         image: postgres:15
         env:
           POSTGRES_USER: asisya_user
-          POSTGRES_PASSWORD: asisya_pass
+          POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
           POSTGRES_DB: asisya_db
         ports:
           - 5432:5432
@@ -33,11 +33,48 @@ jobs:
           - 4566:4566
 
     env:
-      DATABASE_URL: postgresql://asisya_user:asisya_pass@localhost:5432/asisya_db
-      AWS_ACCESS_KEY_ID: test
-      AWS_SECRET_ACCESS_KEY: test
-      AWS_DEFAULT_REGION: us-east-1
+      # ==== App Config ====
+      API_VERSION: 0.0.1
+      DEBUG_MODE: true
+
+      # ==== Database ====
+      DB_HOST: localhost
+      DB_PORT: 5433
+      DB_NAME: asisya_db
+      DB_USER: asisya_user
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      DATABASE_URL: postgresql://asisya_user:${{ secrets.DB_PASSWORD }}@localhost:5433/asisya_db
+
+      # ==== Admin Account ====
+      INITIAL_ADMIN_USERNAME: ${{ secrets.INITIAL_ADMIN_USERNAME }}
+      INITIAL_ADMIN_EMAIL: ${{ secrets.INITIAL_ADMIN_EMAIL }}
+      INITIAL_ADMIN_PASSWORD: ${{ secrets.INITIAL_ADMIN_PASSWORD }}
+
+      # ==== JWT / Security ====
+      SECRET_KEY: ${{ secrets.SECRET_KEY }}
+      ALGORITHM: ${{ secrets.ALGORITHM }}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${{ secrets.ACCESS_TOKEN_EXPIRE_MINUTES }}
+
+      # ==== SMTP ====
+      USE_SMTP: false
+      SMTP_SERVER: your.smtp.server.com
+      SMTP_PORT: 1234
+      SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+      SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+      SENDER_EMAIL: ${{ secrets.SMTP_USERNAME }}
+
+      # === STORAGE MODE ===
+      STORAGE_BACKEND: local
+      PROJECT_ROOT: /home/runner/work/FullStackTest/FullStackTest
+
+      # === AWS / LocalStack ===
+      AWS_S3_BUCKET: asisya-media
+      AWS_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      BULK_PRODUCTS_QUEUE_URL: http://localhost:4566/000000000000/bulk-products-queue
       AWS_ENDPOINT_URL: http://localhost:4566
+      AWS_DEFAULT_REGION: us-east-1
       PYTHONPATH: asisya_api
 
     steps:
