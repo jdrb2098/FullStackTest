@@ -104,7 +104,7 @@ def test_delete(base_repository, db_session):
 
 
 def test_refresh_db(base_repository):
-    with patch('qna_api.core.base_repository.get_db', return_value=iter([MagicMock()])):
+    with patch('asisya_api.core.base_repository.get_db', return_value=iter([MagicMock()])):
         base_repository.refresh_db()
         assert base_repository.db is not None
 

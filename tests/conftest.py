@@ -17,7 +17,7 @@ def load_settings():
     settings.initial_admin_password = "P@ssw0rd!"
 
     # Mock init_db to avoid its execution
-    # monkeypatch.setattr('qna_api.core.database.init_db', lambda: None)
+    # monkeypatch.setattr('asisya_api.core.database.init_db', lambda: None)
     yield
 
 

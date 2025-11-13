@@ -19,7 +19,7 @@ def user_repository(db_session):
 
 
 def test_instance_method(db_session):
-    with patch('qna_api.features.user.repository.get_db', return_value=iter([db_session])):
+    with patch('asisya_api.features.user.repository.get_db', return_value=iter([db_session])):
         # Reset the singleton instance for other tests
         UserRepository._instance = None
         instance1 = UserRepository.instance()
