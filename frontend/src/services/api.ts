@@ -88,23 +88,7 @@ class ApiService {
   }
 
   async createProduct(data: ProductCreateRequest): Promise<Product> {
-    // El controlador espera: name, slug (opcional), description (opcional),
-    // price (requerido), stock (requerido), category_id (opcional), picture (opcional)
-    const formData = new FormData();
-    formData.append("name", data.name);
-    formData.append("price", data.price.toString());
-    formData.append("stock", data.stock.toString());
-
-    if (data.slug) formData.append("slug", data.slug);
-    if (data.description) formData.append("description", data.description);
-    if (data.category_id)
-      formData.append("category_id", data.category_id.toString());
-
-    const response = await this.client.post<Product>("/products", formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
+    const response = await this.client.post<Product>("/products", data);
     return response.data;
   }
 
