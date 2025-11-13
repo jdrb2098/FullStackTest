@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.concurrency import asynccontextmanager
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
 from mediatr import Mediator
 import debugpy
 import os
@@ -51,6 +52,30 @@ def create_app(
         swagger_favicon_url=SWAGGER_FAVICON_URL,
         lifespan=lifespan,
     )
+    
+    # ✅ Configurar CORS
+    # Orígenes permitidos para el frontend
+    allowed_origins = [
+        "*"
+    ]
+    
+    # Si hay una variable de entorno con orígenes adicionales, agregarlos
+    cors_origins_env = os.getenv("CORS_ORIGINS")
+    if cors_origins_env:
+        additional_origins = [origin.strip() for origin in cors_origins_env.split(",") if origin.strip()]
+        allowed_origins.extend(additional_origins)
+        logger.info(f"Orígenes CORS adicionales desde variable de entorno: {additional_origins}")
+    
+    logger.info(f"CORS configurado con orígenes permitidos: {allowed_origins}")
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=allowed_origins,
+        allow_credentials=True,  # Necesario para enviar cookies/tokens
+        allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],  # Métodos HTTP permitidos
+        allow_headers=["*"],  # Permitir todos los headers (incluyendo Authorization, Content-Type, etc.)
+        expose_headers=["*"],  # Exponer todos los headers en la respuesta
+    )
+    
     # ✅ Crear carpeta MEDIA_ROOT si no existe
     media_path = Path(settings.MEDIA_ROOT)
     media_path.mkdir(parents=True, exist_ok=True)

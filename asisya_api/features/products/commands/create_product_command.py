@@ -42,8 +42,7 @@ class CreateProductCommandHandler:
             slug=request.data.slug,
             description=request.data.description,
             price=request.data.price,
-            stock=request.data.stock,
-            picture_path=picture_key,
+            units_in_stock=request.data.stock,
             category_id=request.data.category_id,
         )
 
