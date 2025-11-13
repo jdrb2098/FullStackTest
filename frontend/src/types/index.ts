@@ -27,7 +27,7 @@ export interface Product {
 
 export interface ProductCreateRequest {
   name: string;
-  slug?: string; // El controlador espera slug, no sku directamente
+  sku: string; // El controlador espera slug, no sku directamente
   description?: string;
   price: number;
   stock: number; // El controlador espera stock (requerido), no units_in_stock
