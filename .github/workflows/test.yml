@@ -14,7 +14,7 @@ jobs:
         image: postgres:15
         env:
           POSTGRES_USER: asisya_user
-          POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          POSTGRES_PASSWORD: asisya_pass
           POSTGRES_DB: asisya_db
         ports:
           - 5432:5432
@@ -39,7 +39,7 @@ jobs:
 
       # ==== Database ====
       DB_HOST: localhost
-      DB_PORT: 5433
+      DB_PORT: 5432
       DB_NAME: asisya_db
       DB_USER: asisya_user
       DB_PASSWORD: asisya_pass
@@ -58,9 +58,9 @@ jobs:
       USE_SMTP: false
       SMTP_SERVER: your.smtp.server.com
       SMTP_PORT: 1234
-      SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
-      SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
-      SENDER_EMAIL: ${{ secrets.SMTP_USERNAME }}
+      SMTP_USERNAME: dummy_user
+      SMTP_PASSWORD: dummy_pass
+      SENDER_EMAIL: dummy_user
 
       # === STORAGE MODE ===
       STORAGE_BACKEND: local
@@ -68,8 +68,8 @@ jobs:
       # === AWS / LocalStack ===
       AWS_S3_BUCKET: asisya-media
       AWS_REGION: us-east-1
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
       BULK_PRODUCTS_QUEUE_URL: http://localhost:4566/000000000000/bulk-products-queue
       AWS_ENDPOINT_URL: http://localhost:4566
       AWS_DEFAULT_REGION: us-east-1
@@ -93,15 +93,17 @@ jobs:
       - name: ☁️ Create LocalStack resources
         run: |
           aws --endpoint-url=http://localhost:4566 sqs create-queue --queue-name bulk-products-queue
-          aws --endpoint-url=http://localhost:4566 s3 mb s3://asisya-bucket
-          echo "print('Lambda mock')" > handler.py
+          aws --endpoint-url=http://localhost:4566 s3 mb s3://asisya-bucket || true
+
+          echo "def lambda_handler(event, context): print('Lambda mock')" > handler.py
           zip lambda.zip handler.py
+
           aws --endpoint-url=http://localhost:4566 lambda create-function \
             --function-name processBulkProducts \
             --runtime python3.12 \
             --role arn:aws:iam::000000000000:role/lambda-role \
             --handler handler.lambda_handler \
-            --zip-file fileb://lambda.zip
+            --zip-file fileb://lambda.zip || true
 
       - name: 🧪 Run tests
         run: pytest -v --disable-warnings
